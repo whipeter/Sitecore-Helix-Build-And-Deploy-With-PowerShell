@@ -35,10 +35,16 @@ function build-and-deploy
 
 	# Set the correct developer config based on your username
 	# This is done to enable different config for our project members. So that the unicorn sourcefolder and sitesettings can be individual.
+	# example: zProject.DevSettings.config.peter gets copied over to zProject.DevSettings.Config, which has been placed in the gitignore.
 	[String]$developmentConfigFolder = "$solutionRootFolder\$devConfigPath"
-	[String]$developmentConfigFolderFrom = "$developmentConfigFolder.$env:username"
-	if($developmentConfigFolderFrom) {
-		Copy-Item $developmentConfigFolderFrom $developmentConfigFolder	-Force
+	[String]$developmentConfigFolderFrom = $developmentConfigFolder + "." + $env:username
+	if(Test-Path $developmentConfigFolderFrom){
+		if($developmentConfigFolderFrom) {
+			Copy-Item $developmentConfigFolderFrom $developmentConfigFolder	-Force
+		}
+	}
+	else{
+		Write-Host "$developmentConfigFolderFrom not found. Ignore this if you have not setup individual devsettings." -foregroundcolor Yellow
 	}
 
 	# Nuget restore (external application dependancy https://docs.microsoft.com/en-us/nuget/tools/nuget-exe-cli-reference).
