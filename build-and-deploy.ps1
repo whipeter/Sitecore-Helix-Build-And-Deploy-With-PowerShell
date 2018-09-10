@@ -33,6 +33,14 @@ function build-and-deploy
 	$site = $iis.sites | Where-Object {$_.Name -eq $siteUrl} 
 	[String]$publishTarget = $site.Applications["/"].VirtualDirectories["/"].PhysicalPath
 
+	# Set the correct developer config based on your username
+	# This is done to enable different config for our project members. So that the unicorn sourcefolder and sitesettings can be individual.
+	[String]$developmentConfigFolder = "$solutionRootFolder\$devConfigPath"
+	[String]$developmentConfigFolderFrom = "$developmentConfigFolder.$env:username"
+	if($developmentConfigFolderFrom) {
+		Copy-Item $developmentConfigFolderFrom $developmentConfigFolder	-Force
+	}
+
 	# Nuget restore (external application dependancy https://docs.microsoft.com/en-us/nuget/tools/nuget-exe-cli-reference).
 	if ($nugetRestore) {
 		Write-Host "Restoring NuGet packages..." -foregroundcolor Magenta
