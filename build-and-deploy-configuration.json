@@ -4,7 +4,6 @@
     "__comment":  "script will look for your msbuild.exe in visualstudio 2017 default path. msBuildExe is a optional fallback value if no msbuild.exe is found", 
     "msBuildExe": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Professional\\MSBuild\\15.0\\Bin\\msbuild.exe",
     "unicornScript": "src\\Foundation\\Serialization\\code\\UnicornSync\\UnicornSync.ps1",
-    "devConfigPath": "src\\Project\\Website\\code\\App_Config\\Include\\Project\\yourprojectname.DevSettings.config",
     "appPoolName": "dev.yourapppoolname.com",
     "siteUrl": "dev.yoursitename.com",
     "nugetRestore": true
