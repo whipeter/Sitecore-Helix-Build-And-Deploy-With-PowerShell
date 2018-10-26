@@ -26,12 +26,33 @@ function build-and-deploy
 	[String]$siteUrl = $jsonObject.config.siteUrl
 	[String]$devConfigPath = $jsonObject.config.devConfigPath
 	[bool]$nugetRestore = $jsonObject.config.nugetRestore
+	[bool]$prune = $jsonObject.config.prune
 
 	#Get the paths to the site, based on site inputname
-	[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.Web.Administration")
-	$iis = new-object Microsoft.Web.Administration.ServerManager "C:\Windows\System32\inetsrv\config\applicationHost.config"
-	$site = $iis.sites | Where-Object {$_.Name -eq $siteUrl} 
-	[String]$publishTarget = $site.Applications["/"].VirtualDirectories["/"].PhysicalPath
+	$appCmd = "$Env:SystemRoot\system32\inetsrv\appcmd.exe" 
+	[xml]$site = & $appCmd list vdir "$siteUrl/" /config
+	[String]$publishTarget = $site.virtualDirectory.physicalPath
+
+	# Remove all files under /App_Config/Include and /views except /formbuilder og /shared/ExperienceExplorerView.cshtml
+	# Does not remove folders
+	if($prune){
+		[String]$appConfigInclude = "$publishTarget\App_Config\Include\"
+		$files  = Get-ChildItem $appConfigInclude -Recurse | where {! $_.PSIsContainer}
+		foreach ($file in $files)
+		{
+			Remove-Item $file.FullName
+		}
+		[String]$appViews = "$publishTarget\Views\"
+		$files  = Get-ChildItem $appViews -Recurse | where {! $_.PSIsContainer}
+		foreach ($file in $files)
+		{
+			if(($file.FullName.IndexOf("FormBuilder") -gt 0) -Or $file.FullName.IndexOf("ExperienceExplorerView.cshtml") -gt 0){
+
+			} else {
+				Remove-Item $file.FullName
+			}
+		}
+	}
 
 	# Nuget restore (external application dependancy https://docs.microsoft.com/en-us/nuget/tools/nuget-exe-cli-reference).
 	if ($nugetRestore) {
@@ -63,7 +84,7 @@ function build-and-deploy
 
 	# Build and deploy.
 	Write-Host "Starting MSBuild and deployment - $($solutionFile)..." -foregroundcolor Magenta
-	& "$($msBuildExe)" "$($solutionFile)" /m /nr:false /p:DeployOnBuild=true /p:DeployDefaultTarget=WebPublish /p:WebPublishMethod=FileSystem /p:Configuration=debug /p:PublishUrl=$publishTarget
+	& "$($msBuildExe)" "$($solutionFile)" /m /nr:false /p:DeployOnBuild=true /p:DeployDefaultTarget=WebPublish /p:WebPublishMethod=FileSystem /p:Configuration=debug /p:PublishUrl=$publishTarget -v:q -nologo -clp:Summary
 	
 	if ($LastExitCode -ne 0){
 		Write-Host "Build failed" -foregroundcolor Magenta
